@@ -36,3 +36,10 @@ CREATE TABLE PageViewCounts (
   views counter,
   PRIMARY KEY(url)
 );
+
+CREATE TABLE Nicks (
+    nick varchar,
+    status varchar,
+    PRIMARY KEY (nick)
+);
+
