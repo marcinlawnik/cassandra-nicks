@@ -38,81 +38,29 @@ public class BackendSession {
 		prepareStatements();
 	}
 
-	private static PreparedStatement SELECT_ALL_FROM_USERS;
-	private static PreparedStatement INSERT_INTO_USERS;
-	private static PreparedStatement DELETE_ALL_FROM_USERS;
 
-	// --- 
+	private static PreparedStatement INSERT_INTO_NICKS;
+	private static PreparedStatement SELECT_ALL_FROM_NICKS;
 	private static PreparedStatement SELECT_NICK;
+	private static PreparedStatement INSERT_STATUS;
+	private static PreparedStatement DELETE_STATUS_BY_NICK;
 
-	private static final String USER_FORMAT = "- %-10s  %-16s %-10s %-10s\n";
-	// private static final SimpleDateFormat df = new
-	// SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	private static PreparedStatement SELECT_STATUS;
+
+	private static final String NICK_FORMAT = "Nick: %-10s,Status: %-10s\n";
 
 	private void prepareStatements() throws BackendException {
 		try {
-			// SELECT_ALL_FROM_USERS = session.prepare("SELECT * FROM users;");
-			// INSERT_INTO_USERS = session
-			// 		.prepare("INSERT INTO users (companyName, name, phone, street) VALUES (?, ?, ?, ?);");
-			// DELETE_ALL_FROM_USERS = session.prepare("TRUNCATE users;");
-
-			SELECT_NICK = session.prepare("SELECT * FROM Nicks WHERE nick = ?;");
-			INSERT_STATUS = session.prepare("INSERT INTO Nicks (status) VALUES (?) WHERE nick = ?;")
+			 SELECT_ALL_FROM_NICKS = session.prepare("SELECT * FROM nicks;");
+			 SELECT_NICK = session.prepare("SELECT * FROM nicks WHERE nick = ?;");
+			 INSERT_INTO_NICKS = session.prepare("INSERT INTO nicks (nick,status) VALUES(?,?);");
+			 INSERT_STATUS = session.prepare("UPDATE nicks SET status = ? WHERE nick = ?");
+			 DELETE_STATUS_BY_NICK = session.prepare("UPDATE nicks SET status = null WHERE nick = ?");
 		} catch (Exception e) {
 			throw new BackendException("Could not prepare statements. " + e.getMessage() + ".", e);
 		}
-
 		logger.info("Statements prepared");
 	}
-
-	// public String selectAll() throws BackendException {
-	// 	StringBuilder builder = new StringBuilder();
-	// 	BoundStatement bs = new BoundStatement(SELECT_ALL_FROM_USERS);
-
-	// 	ResultSet rs = null;
-
-	// 	try {
-	// 		rs = session.execute(bs);
-	// 	} catch (Exception e) {
-	// 		throw new BackendException("Could not perform a query. " + e.getMessage() + ".", e);
-	// 	}
-
-	// 	for (Row row : rs) {
-	// 		String rcompanyName = row.getString("companyName");
-	// 		String rname = row.getString("name");
-	// 		int rphone = row.getInt("phone");
-	// 		String rstreet = row.getString("street");
-
-	// 		builder.append(String.format(USER_FORMAT, rcompanyName, rname, rphone, rstreet));
-	// 	}
-
-	// 	return builder.toString();
-	// }
-
-	// public void upsertUser(String companyName, String name, int phone, String street) throws BackendException {
-	// 	BoundStatement bs = new BoundStatement(INSERT_INTO_USERS);
-	// 	bs.bind(companyName, name, phone, street);
-
-	// 	try {
-	// 		session.execute(bs);
-	// 	} catch (Exception e) {
-	// 		throw new BackendException("Could not perform an upsert. " + e.getMessage() + ".", e);
-	// 	}
-
-	// 	logger.info("User " + name + " upserted");
-	// }
-
-	// public void deleteAll() throws BackendException {
-	// 	BoundStatement bs = new BoundStatement(DELETE_ALL_FROM_USERS);
-
-	// 	try {
-	// 		session.execute(bs);
-	// 	} catch (Exception e) {
-	// 		throw new BackendException("Could not perform a delete operation. " + e.getMessage() + ".", e);
-	// 	}
-
-	// 	logger.info("All users deleted");
-	// }
 
 	protected void finalize() {
 		try {
@@ -124,9 +72,9 @@ public class BackendSession {
 		}
 	}
 
-	public String getStatusByNick(String nick) throws BackendException {
-		BoundStatement bs = new BoundStatement(SELECT_NICK);
-		bs.bind(nick);
+	public String selectAll() throws BackendException {
+		StringBuilder builder = new StringBuilder();
+		BoundStatement bs = new BoundStatement(SELECT_ALL_FROM_NICKS);
 
 		ResultSet rs = null;
 
@@ -136,23 +84,73 @@ public class BackendSession {
 			throw new BackendException("Could not perform a query. " + e.getMessage() + ".", e);
 		}
 
-		String status = rs.getString("status");
+		for (Row row : rs) {
+			String nick = row.getString("nick");
+			String status = row.getString("status");
 
-		logger.info("Status: " + status);
-
-		return status
-	}
-
-	public void updateStatusByNick(String nick, String status) throws BackendException {
-		BoundStatement bs = new BoundStatement(INSERT_STATUS);
-		bs.bind(status, nick);
-
-		try {
-			session.execute(bs);
-		} catch (Exception e) {
-			throw new BackendException("Could not perform an upsert. " + e.getMessage() + ".", e);
+			builder.append(String.format(NICK_FORMAT, nick,status));
 		}
 
-		logger.info("Set " + status + " status for " + nick + " nick");
+		return builder.toString();
 	}
+
+	public String getStatusByNick(String nick) throws BackendException {
+		BoundStatement bs = new BoundStatement(SELECT_NICK);
+		bs.bind(nick);
+
+		ResultSet rs = null;
+		try {
+			rs = session.execute(bs);
+		} catch (Exception e){
+			throw new BackendException("Could not perform a query. "+e.getMessage()+".",e);
+		}
+		String status = "";
+		for(Row row : rs){
+			status = row.getString("status");
+		}
+
+		logger.info("Status: " +status);
+		return status;
+	}
+
+	public void deleteStatusByNick(String nick) throws BackendException {
+		BoundStatement bs = new BoundStatement(DELETE_STATUS_BY_NICK);
+		bs.bind(nick);
+
+		try{
+			session.execute(bs);
+		} catch (Exception e){
+			throw new BackendException("Could not perform a query. "+e.getMessage()+".",e);
+		}
+
+		logger.info("Status deleted for: " +nick);
+	}
+
+	public void updateStatusByNick(String nick, String status) throws BackendException{
+		BoundStatement bs = new BoundStatement(INSERT_STATUS);
+		bs.bind(status,nick);
+
+		try{
+			session.execute(bs);
+		} catch (Exception e){
+			throw new BackendException("Could not perform an upsert. "+e.getMessage() + ".",e);
+		}
+
+		logger.info("Set "+status +"status for " + nick +" nick");
+	}
+
+	public void upsertNick(String nickName, String status) throws BackendException {
+		BoundStatement bs = new BoundStatement(INSERT_INTO_NICKS);
+		bs.bind(nickName,status);
+		ResultSet rs = null;
+
+		try {
+			rs = session.execute(bs);
+		} catch (Exception e ){
+			throw new BackendException("Could not perform a query. "+ e.getMessage() +".",e);
+		}
+		logger.info("Nick "+nickName+" upserted");
+	}
+
+
 }

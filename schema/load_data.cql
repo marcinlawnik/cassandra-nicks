@@ -69,3 +69,4 @@ INSERT INTO MeteoData2 (stationName, mDay, measurement, temperature, pressure) V
 INSERT INTO MeteoData2 (stationName, mDay, measurement, temperature, pressure) VALUES ('Zakopane', '2012-07-02', '2012-07-02 16:00:00', 14, 980);
 INSERT INTO MeteoData2 (stationName, mDay, measurement, temperature, pressure) VALUES ('Kasprowy', '2012-07-02', '2012-07-02 16:00:00', 17, 799);
 INSERT INTO MeteoData2 (stationName, mDay, measurement, temperature, pressure) VALUES ('Gubalowka', '2012-07-02', '2012-07-02 16:00:00', 16, 893);
+
