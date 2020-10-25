@@ -1,6 +1,7 @@
 package cassdemo;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -30,7 +31,7 @@ public class Main {
 
 		List<String> nicks = Arrays.asList("robert", "marcin", "maciej", "filip");
 		Random rand = new Random();
-		String mineID = "123"; // Nie wiem jakie ID to powinno w końcu być więc narazie daje takie coś
+		String mineID = InetAddress.getLocalHost().getHostName(); // Naszym ID jest HostName komputera na którym uruchamiamy skrypt
 		for(String nick : nicks){
 			session.upsertNick(nick,null);
 		}
